@@ -3,38 +3,39 @@ using Microsoft.AspNetCore.Mvc;
 using DogGo.Repositories;
 using System.Collections.Generic;
 using DogGo.Models;
+using System;
 
 namespace DogGo.Controllers
 {
     public class DogsController : Controller
     {
-        private readonly IDogRepository _walkerRepo;
+        private readonly IDogRepository _dogRepo;
 
         // ASP.NET will give us an instance of our Dog Repository. This is called "Dependency Injection"
-        public DogsController(IDogRepository walkerRepository)
+        public DogsController(IDogRepository dogRepository)
         {
-            _walkerRepo = walkerRepository;
+            _dogRepo = dogRepository;
         }
 
         // GET: DogsController
         public ActionResult Index()
         {
-            List<Dog> walkers = _walkerRepo.GetAllDogs();
+            List<Dog> dogs = _dogRepo.GetAllDogs();
 
-            return View(walkers);
+            return View(dogs);
         }
 
         // GET: DogsController/Details/5
         public ActionResult Details(int id)
         {
-            Dog walker = _walkerRepo.GetDogById(id);
+            Dog dog = _dogRepo.GetDogById(id);
 
-            if (walker == null)
+            if (dog == null)
             {
                 return NotFound();
             }
 
-            return View(walker);
+            return View(dog);
         }
 
         // GET: DogsController/Create
@@ -46,15 +47,17 @@ namespace DogGo.Controllers
         // POST: DogsController/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Create(IFormCollection collection)
+        public ActionResult Create(Dog dog)
         {
             try
             {
-                return RedirectToAction(nameof(Index));
+                _dogRepo.AddDog(dog);
+
+                return RedirectToAction("Index");
             }
-            catch
+            catch(Exception)
             {
-                return View();
+                return View(dog);
             }
         }
 
