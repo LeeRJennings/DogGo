@@ -132,7 +132,7 @@ namespace DogGo.Repositories
                 conn.Open();
                 using (SqlCommand cmd = conn.CreateCommand())
                 {
-                    cmd.CommandText = @"UPDATE Dog 
+                    cmd.CommandText = @"UPDATE Dog       
                                         SET Name = @name, 
                                             OwnerId = @ownerId, 
                                             Breed = @breed, 
@@ -153,7 +153,18 @@ namespace DogGo.Repositories
 
         public void DeleteDog(int id)
         {
+            using (SqlConnection conn = Connection)
+            {
+                conn.Open();
+                using (SqlCommand cmd = conn.CreateCommand())
+                {
+                    cmd.CommandText = @"DELETE FROM Dog
+                                        WHERE Id = @id";
+                    cmd.Parameters.AddWithValue("@id", id);
 
+                    cmd.ExecuteNonQuery();
+                }
+            }
         }
     }
 }
