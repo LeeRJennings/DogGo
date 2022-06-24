@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using DogGo.Models;
 using System;
 using DogGo.Models.ViewModels;
+using System.Security.Claims;
 
 namespace DogGo.Controllers
 {
@@ -12,20 +13,35 @@ namespace DogGo.Controllers
     {
         private readonly IWalkerRepository _walkerRepo;
         private readonly IWalksRepository _walksRepo;
+        private readonly IOwnerRepository _ownerRepo;
 
         // ASP.NET will give us an instance of our Walker Repository. This is called "Dependency Injection"
-        public WalkersController(IWalkerRepository walkerRepository, IWalksRepository walksRepository)
+        public WalkersController(IWalkerRepository walkerRepository, IWalksRepository walksRepository, IOwnerRepository ownerRepository)
         {
             _walkerRepo = walkerRepository;
             _walksRepo = walksRepository;
+            _ownerRepo = ownerRepository;
         }
 
         // GET: WalkersController
         public ActionResult Index()
         {
-            List<Walker> walkers = _walkerRepo.GetAllWalkers();
+            int loggedInUserId = GetCurrentUserId();
 
-            return View(walkers);
+            if (loggedInUserId == 0)
+            {
+                List<Walker> allWalkers = _walkerRepo.GetAllWalkers();
+
+                return View(allWalkers);
+            }
+            else
+            {
+                Owner loggedInUser = _ownerRepo.GetOwnerById(loggedInUserId);
+            
+                List<Walker> walkers = _walkerRepo.GetWalkersInNeighborhood(loggedInUser.NeighborhoodId);
+
+                return View(walkers);
+            }
         }
 
         // GET: WalkersController/Details/5
@@ -40,10 +56,10 @@ namespace DogGo.Controllers
                 Walks = walks
             };
 
-            //if (walker == null)
-            //{
-            //    return NotFound();
-            //}
+            if (walker == null)
+            {
+                return NotFound();
+            }
 
             return View(vm);
         }
@@ -108,6 +124,18 @@ namespace DogGo.Controllers
             catch
             {
                 return View();
+            }
+        }
+        private int GetCurrentUserId()
+        {
+            string id = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(id))
+            {
+                return 0;
+            }
+            else
+            {
+                return int.Parse(id);
             }
         }
     }
